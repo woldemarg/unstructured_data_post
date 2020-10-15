@@ -1,0 +1,6 @@
+Any “data” that does not fit nicely into a column or a row — is considered unstructured.
+https://www.marklogic.com/blog/6-things-you-need-to-know-about-unstructured-content/
+
+
+Unstructured data (or unstructured information) is information that either does not have a pre-defined data model or is not organized in a pre-defined manner. Unstructured information is typically text-heavy, but may contain data such as dates, numbers, and facts as well. This results in irregularities and ambiguities that make it difficult to understand using traditional programs as compared to data stored in fielded form in databases or annotated (semantically tagged) in documents.
+https://en.wikipedia.org/wiki/Unstructured_data
