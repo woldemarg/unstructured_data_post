@@ -1,3 +1,4 @@
+"""Data extraction from a PDF table with semi-structured layout."""
 import tempfile
 from io import StringIO
 import tabula
@@ -24,12 +25,13 @@ pd.set_option('display.max_colwidth', None)
 
 # %%
 
-def make_df_image(table, max_cols=-1):
-    ''' Return dataframe as image '''
-
+def make_df_image(table,
+                  max_cols=-1,
+                  max_rows=-1):
+    """Return dataframe as image."""
     with tempfile.NamedTemporaryFile(suffix='.jpg',
                                      delete=False) as tmp:
-        dfi.export(table, tmp.name, max_cols=max_cols)
+        dfi.export(table, tmp.name, max_cols=max_cols, max_rows=max_rows)
         image = mpimg.imread(tmp.name)
         return image
 
@@ -39,8 +41,7 @@ def make_lines_image(lines,
                      background=(0, 0, 0),
                      text_color=(255, 255, 255),
                      font_size=8):
-    ''' Return raw text in lines as image '''
-
+    """Return raw text in lines as image."""
     lines = pd.Series(lines)
     longest_line = lines[lines.str.len().idxmax()]
     image = Image.new("RGBA", (1, 1))
@@ -63,7 +64,6 @@ def make_lines_image(lines,
 PDF = 'example_ready/example.pdf'
 pdf_img = convert_from_path(PDF)[0]
 
-plt.figure(figsize=(15, 10))
 plt.axis('off')
 plt.imshow(pdf_img)
 
@@ -80,6 +80,7 @@ camelot_df = (camelot
                         suppress_stdout=True,
                         pages="all")
               [0].df)
+
 
 fig, ax = plt.subplots(2, 1)
 titles = ['tabula 2.2.0', 'camelot 0.8.2']
@@ -125,19 +126,20 @@ fig.tight_layout()
 # %%
 
 def adjust_string(s, out_width):
-    ''' Pad string with whitespaces to the right
-    to make it of the same length as longest string in a series.
-    Needed further to evenly split strings into columns on a divider
-    such as empty vertical-wise string through all the rows '''
+    """Pad string with whitespaces to the right.
+
+    It wil make current string of the same length as longest
+    string in a series. Needed further to evenly split strings
+    into columns on a divider such as empty vertical-wise
+    string through all the rows.
+    """
     fill_width = out_width - len(s)
     s += ' ' * fill_width
     return s
 
 
 def concat_cols_on_condition(table, filter_func, iterable=None):
-    ''' Concatenate columns of a given dataframe
-    on some condition (e.g. if column has no original header,
-                       or column automayed header not in list) '''
+    """Concatenate columns of a given dataframe on some condition."""
     if iterable is None:
         iterable = table
     for col in table.columns:
@@ -151,13 +153,16 @@ def concat_cols_on_condition(table, filter_func, iterable=None):
 
 
 def add_postfix_after(in_list):
-    ''' Rename duplicates in a given list.
+    """Rename duplicates in a given list.
+
     in:
         print(add_postfix_after([0, 1, 2, 2, 3, 3, 3, 4, 5, 6, 6]))
     out:
         ['0', '1', '2', '2_1', '3', '3_1', '3_2', '4', '5', '6', '6_1']
+
     Needed to further compare list of columns with added ones to the
-    index of original columns '''
+    index of original columns.
+    """
     out_list = []
     x = 0
     while x < len(in_list) - 1:
@@ -180,6 +185,7 @@ def add_postfix_after(in_list):
 
 
 # %%
+
 # get matrix with all elements of a string including spaces
 # to further search for a vertical empty string through all the rows
 pdf_lines = pd.Series(pdfminer_lines)
@@ -265,8 +271,7 @@ fig.tight_layout()
 
 # %%
 
-# columns with underscored indicies got from splitting
-# original names by '/'
+# columns with underscored indicies got from splitting original names by '/'
 header_splitted = header_row.str.split('/')
 
 header_indicies = []
@@ -290,17 +295,18 @@ column_names = pd.Series(data=header_elements,
 
 all_rows.columns = add_postfix_after(all_rows.columns.astype(int).tolist())
 
+plt.axis('off')
+plt.imshow(make_df_image(all_rows, max_rows=3))
+
 
 # %%
 
-# mathching automated indicies of added column with original ones
 final_table = concat_cols_on_condition(table=all_rows,
                                        iterable=column_names.index,
                                        filter_func=lambda iterable, element:
                                            str(element) not in iterable)
 
 final_table.columns = column_names[final_table.columns]
-
 
 fig, ax = plt.subplots(2, 1)
 titles = ['semi-structured data', 'structured data']
@@ -311,23 +317,3 @@ for i, img in enumerate([make_lines_image(pdfminer_lines),
     ax[i].title.set_text(titles[i])
     ax[i].imshow(img)
 fig.tight_layout()
-
-
-# %%
-help(dfi.export)
-
-
-
-def concat_cols_on_condition(table, filter_func, iterable=None):
-    ''' Concatenate columns of a given dataframe
-    on some condition (e.g. if column has no original header,
-                       or column automayed header not in list) '''
-    if iterable is None:
-        iterable = table
-    for col in all_rows.columns:
-        if col not in column_names.index):
-            prev_col_idx = table.columns.get_loc(col) - 1
-            prev_col = table.columns[prev_col_idx]
-            table[prev_col] = table[[prev_col, col]].agg(' '.join, axis=1)
-            table.drop([col], axis=1, inplace=True)
-    return table
