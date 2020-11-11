@@ -4,6 +4,7 @@
 **/__pycache__
 **/.ipynb_checkpoints
 **/example_prep
+**/.jovianrc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
